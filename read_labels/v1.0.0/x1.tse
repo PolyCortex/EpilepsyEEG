@@ -1,0 +1,10 @@
+# example: foo.tse
+#
+version = tse_v1.0.0
+
+# data starts here
+#
+0.0000	488.0000	bckg	0.9500  seiz 0.0500
+488.0000	734.0000	bckg	0.3000	seiz	0.7000
+734.0000	1247.0000	bckg	1.0000 seiz 0.0000
+

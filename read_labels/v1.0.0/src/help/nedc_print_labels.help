@@ -1,0 +1,26 @@
+name: nedc_print_labels
+synopsis: nedc_print_labels [options] file(s)
+descr: prints out annotations in a simple format
+
+options:
+ -level: the annotation level to display [0]
+ -sublevel: the annotation sublevel to display [0]
+ -help: display this help message
+
+arguments:
+ file(s): individual annotation files or a list of annotation files
+
+examples:
+
+ nedc_print_labels -lev 0 -sub 1 file1.lbl
+
+  prints level: 0, sublevel: 1 of file1.lbl
+
+ nedc_print_labels file1.list
+
+  prints level: 0, sublevel: 0 (by default) of the annotations for the files
+  listed in the filenames' file file1.list
+
+ nedc_print_labels file1.tse file2.list
+
+  prints the annotations of file1.tse and the files in file2.list
