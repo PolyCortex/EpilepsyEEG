@@ -60,5 +60,15 @@ class SpectrogramTransformer(BaseEstimator, TransformerMixin):
         spectrograms_db_list = [(f,t,10*np.log10(Sxx)) for (f,t,Sxx) in spectrograms_list]
         return montages, spectrograms_db_list
 
+class SpectrumXY(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        pass
+
+    def fit(self,X):
+        return self
+
+    def transform(self,X):
+        X = X.reshape(len(X), 1)
+        return X + X.T
 
 
