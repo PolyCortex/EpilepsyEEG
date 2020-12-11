@@ -43,8 +43,8 @@ class SpectrogramTransformer(BaseEstimator, TransformerMixin):
 
     def transform(self, X):
         """Performs transformation. Computes for each montage the associated spectrogram. Returns also frequency and time range"""
-        montages, montages_names = combiner(X, montage_type=self.montage_type)
-        montages = [montage/montage.max() for montage in montages]
+        montages, self.montages_names = combiner(X, montage_type=self.montage_type) # Make montages (difference of electrodes)
+        montages = [montage/montage.max() for montage in montages] # Normalization
         spectrograms_list = [spectrogram(montages[id_montage],
                                          fs=self.fs,
                                          window=self.window,
@@ -57,8 +57,9 @@ class SpectrogramTransformer(BaseEstimator, TransformerMixin):
                                          axis=self.axis,
                                          mode=self.mode)
                              for id_montage in range(self.n_montages)]
-        spectrograms_db_list = [(f,t,10*np.log10(Sxx)) for (f,t,Sxx) in spectrograms_list]
-        return montages, spectrograms_db_list
+        self.f, self.t = spectrograms_list[0][:2] # f,t is the same for every montage
+        spectrograms_db_list = [10*np.log10(Sxx) for (_,_,Sxx) in spectrograms_list]
+        return self.t, self.f, spectrograms_db_list
 
 class SpectrumXY(BaseEstimator, TransformerMixin):
     def __init__(self):

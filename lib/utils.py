@@ -58,12 +58,12 @@ def combiner(raw, montage_type=1):
         selector = list(range(8))+list(range(9,13))+list(range(14,22)) # Remove two montages if montage_type==3
     else:
         selector = list(range(22))
-    montages = list(map(lambda elec1, elec2: data[channels[elec1],:] - data[channels[elec2],:],
+    signals = list(map(lambda elec1, elec2: data[channels[elec1],:] - data[channels[elec2],:],
                     FIRST_ELEC[selector], SECOND_ELEC[selector]))
     montages_names = list(map(lambda elec1, elec2: elec1+'-'+elec2,
                           FIRST_ELEC[selector], SECOND_ELEC[selector]))
 
-    return montages, montages_names
+    return signals, montages_names
 
 def annotations_reader(file, montage_type=1):
     """
@@ -81,7 +81,6 @@ def annotations_reader(file, montage_type=1):
     filesList = [file for file in os.listdir(folder)
                       if os.path.splitext(file)[-1] in ['.tse', '.tse_bi', '.lbl', '.lbl_bi']
                       and file.startswith(basename)]
-    print(filesList)
 
     # Build dictionary aof annotations
     annot_dict = {}

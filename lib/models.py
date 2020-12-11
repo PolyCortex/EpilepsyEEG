@@ -9,30 +9,33 @@ class Baseline(BaseEstimator, ClassifierMixin):
         self.fs = 200
         self.coef = 0.75
         self.width_window = width_window
-        self.deltaT = self.width_window - self.width_window*200//8/200
-        self.all_montages_new_annotations = None
-        self.combined_annotation = None
+#         self.deltaT = self.width_window - self.width_window*200//8/200 # Why 200 and 8 ?
+        self.all_montages_predictions = None
+        self.combined_predictions = None
 
         df_model = joblib.load('df_model.dump')
 
-    def fit(self, spectrograms_db_list):
+    def fit(self, t, f, spectrograms_db_list):
         """
         Makes the prediction by comparison to the global spectrum.
         : param spectrograms_db_list: list of 3-elements tuples : (frequencies, times, spectrogram in dB). There is one tuple per montage.
         """
-        self.all_montages_new_annotations = []
-        for id_montage, (_,t,Sxx_db) in enumerate(spectrograms_db_list):
+        self.all_montages_predictions = []
+        self.t = t
+        deltaT = t[1] - t[0]
+        # Each montage has its own prediction. Seizure sections are predicted as 1
+        for id_montage, Sxx_db in enumerate(spectrograms_db_list):
             spectrum_global = Sxx_db.sum(axis=1)/max(t) # Compute global spectrum for each montage
-            # Check which sections are considered as seizures
-            self.all_montages_new_annotations.append([sum(sample > spectrum_global) > self.coef*len(sample)
-                                                 for sample in Sxx_db.T/self.deltaT])
+            self.all_montages_predictions.append([sum(sample > spectrum_global) > self.coef*len(sample)
+                                                 for sample in Sxx_db.T/deltaT])
 
-        # Combine annotations : how many montages have caught a seizure ?
-        self.combined_annotation = np.array(self.all_montages_new_annotations).sum(axis=0)
+        # Combine predictions : Compute for each section on how many montages seizure was seen
+        self.combined_predictions = np.array(self.all_montages_predictions).sum(axis=0)
 
     def predict(self):
-        """Read predictions made during *fit* method, and returns it with deltaT parameter"""
-        return self.deltaT, self.combined_annotation.astype(bool)
+        """Read predictions made during *fit* method"""
+#         return self.deltaT, self.combined_annotation.astype(bool)
+        return self.t, self.combined_predictions.astype(bool)
 
 
 class PostProcessing(BaseEstimator, ClassifierMixin):
@@ -41,8 +44,8 @@ class PostProcessing(BaseEstimator, ClassifierMixin):
         self.minimum_seizure_duration = minimum_seizure_duration
         self.minimum_interseizure_gap = minimum_interseizure_gap
 
-    def fit(self, deltaT, predictions):
-        self.deltaT = deltaT
+    def fit(self, t, predictions):
+        self.deltaT = t[1] - t[0]
         self.predictions = predictions
 
     def predict(self):
@@ -76,4 +79,4 @@ class PostProcessing(BaseEstimator, ClassifierMixin):
             if events_durations[lab] < self.minimum_interseizure_gap:
                 new_predictions[events_ids==lab] = True
 
-        return self.deltaT, new_predictions
+        return new_predictions
