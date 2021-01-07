@@ -1,0 +1,403 @@
+This document attempts to explain in greater detail how to process the EDF
+files in this database.
+
+Why is this data messy? This data was collected in an actual hospital
+setting over about 14 years. Software, protocols, technicians, etc. change.
+
+Why did we not only retain data of the same type? Only about 7% of the
+data collected has actual seizure events. We are short on data that contains
+seizure events. We are annotating all data that we can find that contains
+seizure events. We cannot afford to throw data away right now since our
+technology (deep learning) requires massive amounts of data for trainging.
+
+Let me repeat: clinical EEG data is messy. The channels are not
+consistently labeled. This is described in great detail in this
+publication:
+
+ S. Ferrell, V. Mathew, T. Ahsan, and J. Picone, “The Temple University
+ Hospital EEG Corpus: Electrode Location and Channel Labels,” Philadelphia,
+ Pennsylvania, USA, 2019.
+ URL: https://www.isip.piconepress.com/publications/reports/2019/tuh_eeg/electrodes/
+
+A copy of this document is located in 01_elect.pdf in this directory.
+
+Your software must deal with channels by labels if you want to successfully
+read the data. Further, and this part is important, you have to create
+an equivalency mapping between the electrode configurations if you want
+to process the data jointly. This will be explained below.
+
+There are three types of EEG configurations in v1.5.1 (and our TUH
+EEG data in general):
+
+ 01_tcp_ar
+ 02_tcp_le
+ 03_tcp_ar_a
+
+However, within each of these subsets of the data, the number of channels
+and channel labels vary. Fortunately, for the first two (01_tcp_ar
+and 02_tcp_le), there are 19 channels common to all the data. For the
+third set (03_tcp_ar_a), there are 17 channels in common with the first
+two sets.
+
+There are many ways to deal with such variations in channels - this is
+really part of your technology development. You could, for example,
+simply ignore channel labels altogether. In one of our best research
+systems, we analyze each channel independently, and then aggregate the
+hypotheses with a postprocessor. This system doesn't really pay
+attention to channel labels, though we do preprocess the signals as
+described below. In another successful system, we build a single
+feature vector by concatenating all the features, and then use
+Principal Components Analysis (PCA) to reduce the dimensionality.
+
+We have used two strategies to deal with the missing data. In one
+approach, we simply replace the missing channels with other existing
+channels. Though this makes the data redundant, it is an expediant way
+to make sure all the data has all the necessary channels. In a second
+approach, we zero out the missing channels.
+
+Nevertheless, you must read the data in the same order from each file
+if you want your algorithms to work properly. This means you must
+access and sort them by channel labels.
+
+We have previously released nedc_pystream to demonstrate how you can
+access channels by labels. There are three parameeter files that describe
+in great detail how to access the data:
+
+ ./paremter_files/params_01_tcp_ar.txt
+ ./paremter_files/params_02_tcp_le.txt
+ ./paremter_files/params_03_tcp_ar_a.txt
+
+Below we explain the key parts of these three files.
+
+The TCP_AR configuration uses these channel specifications:
+
+ montage = 0, FP1-F7: EEG FP1-REF -- EEG F7-REF
+ montage = 1, F7-T3: EEG F7-REF -- EEG T3-REF
+ montage = 2, T3-T5: EEG T3-REF -- EEG T5-REF
+ montage = 3, T5-O1: EEG T5-REF -- EEG O1-REF
+ montage = 4, FP2-F8: EEG FP2-REF -- EEG F8-REF
+ montage = 5, F8-T4: EEG F8-REF -- EEG T4-REF
+ montage = 6, T4-T6: EEG T4-REF -- EEG T6-REF
+ montage = 7, T6-O2: EEG T6-REF -- EEG O2-REF
+ montage = 8, A1-T3: EEG A1-REF -- EEG T3-REF
+ montage = 9, T3-C3: EEG T3-REF -- EEG C3-REF
+ montage = 10, C3-CZ: EEG C3-REF -- EEG CZ-REF
+ montage = 11, CZ-C4: EEG CZ-REF -- EEG C4-REF
+ montage = 12, C4-T4: EEG C4-REF -- EEG T4-REF
+ montage = 13, T4-A2: EEG T4-REF -- EEG A2-REF
+ montage = 14, FP1-F3: EEG FP1-REF -- EEG F3-REF
+ montage = 15, F3-C3: EEG F3-REF -- EEG C3-REF
+ montage = 16, C3-P3: EEG C3-REF -- EEG P3-REF
+ montage = 17, P3-O1: EEG P3-REF -- EEG O1-REF
+ montage = 18, FP2-F4: EEG FP2-REF -- EEG F4-REF
+ montage = 19, F4-C4: EEG F4-REF -- EEG C4-REF
+ montage = 20, C4-P4: EEG C4-REF -- EEG P4-REF
+ montage = 21, P4-O2: EEG P4-REF -- EEG O2-REF
+
+The TCP_LE configuration uses these channel specifications:
+
+ montage =  0, FP1-F7: EEG FP1-LE  --  EEG F7-LE
+ montage =  1, F7-T3:  EEG F7-LE   --  EEG T3-LE
+ montage =  2, T3-T5:  EEG T3-LE   --  EEG T5-LE
+ montage =  3, T5-O1:  EEG T5-LE   --  EEG O1-LE
+ montage =  4, FP2-F8: EEG FP2-LE  --  EEG F8-LE
+ montage =  5, F8-T4:  EEG F8-LE   --  EEG T4-LE
+ montage =  6, T4-T6:  EEG T4-LE   --  EEG T6-LE
+ montage =  7, T6-O2:  EEG T6-LE   --  EEG O2-LE
+ montage =  8, A1-T3:  EEG A1-LE   --  EEG T3-LE
+ montage =  9, T3-C3:  EEG T3-LE   --  EEG C3-LE
+ montage = 10, C3-CZ:  EEG C3-LE   --  EEG CZ-LE
+ montage = 11, CZ-C4:  EEG CZ-LE   --  EEG C4-LE
+ montage = 12, C4-T4:  EEG C4-LE   --  EEG T4-LE
+ montage = 13, T4-A2:  EEG T4-LE   --  EEG A2-LE
+ montage = 14, FP1-F3: EEG FP1-LE  --  EEG F3-LE
+ montage = 15, F3-C3:  EEG F3-LE   --  EEG C3-LE
+ montage = 16, C3-P3:  EEG C3-LE   --  EEG P3-LE
+ montage = 17, P3-O1:  EEG P3-LE   --  EEG O1-LE
+ montage = 18, FP2-F4: EEG FP2-LE  --  EEG F4-LE
+ montage = 19, F4-C4:  EEG F4-LE   --  EEG C4-LE
+ montage = 20, C4-P4:  EEG C4-LE   --  EEG P4-LE
+ montage = 21, P4-O2:  EEG P4-LE   --  EEG O2-LE
+
+The TCP_AR_A configuration uses these channel specifications:
+
+ montage = 0, FP1-F7: EEG FP1-REF -- EEG F7-REF
+ montage = 1, F7-T3: EEG F7-REF -- EEG T3-REF
+ montage = 2, T3-T5: EEG T3-REF -- EEG T5-REF
+ montage = 3, T5-O1: EEG T5-REF -- EEG O1-REF
+ montage = 4, FP2-F8: EEG FP2-REF -- EEG F8-REF
+ montage = 5, F8-T4: EEG F8-REF -- EEG T4-REF
+ montage = 6, T4-T6: EEG T4-REF -- EEG T6-REF
+ montage = 7, T6-O2: EEG T6-REF -- EEG O2-REF
+ montage = 8, T3-C3: EEG T3-REF -- EEG C3-REF
+ montage = 9, C3-CZ: EEG C3-REF -- EEG CZ-REF
+ montage = 10, CZ-C4: EEG CZ-REF -- EEG C4-REF
+ montage = 11, C4-T4: EEG C4-REF -- EEG T4-REF
+ montage = 12, FP1-F3: EEG FP1-REF -- EEG F3-REF
+ montage = 13, F3-C3: EEG F3-REF -- EEG C3-REF
+ montage = 14, C3-P3: EEG C3-REF -- EEG P3-REF
+ montage = 15, P3-O1: EEG P3-REF -- EEG O1-REF
+ montage = 16, FP2-F4: EEG FP2-REF -- EEG F4-REF
+ montage = 17, F4-C4: EEG F4-REF -- EEG C4-REF
+ montage = 18, C4-P4: EEG C4-REF -- EEG P4-REF
+ montage = 19, P4-O2: EEG P4-REF -- EEG O2-REF
+
+Note that "--" indicates a differencing of the respective channels. For
+example, "EEG FP1-REF -- EEG F7-REF" means you read the channel labeled
+"EEG FP1-REF" and subtract the channel "EEG F7-REF" from it.
+
+The first thing you will notice about these mappings is that the output
+channel label, which is the first string in the line, varies:
+
+ tcp_ar:    FP1-F7: EEG FP1-REF -- EEG F7-REF
+ tcp_ar_le: FP1-F7: EEG FP1-LE  --  EEG F7-LE
+ tcp_ar_a:  FP1-F7: EEG FP1-REF -- EEG F7-REF
+
+This is how we declare equivalency between the channels across these
+electrode configurations. Through the use of this mapping, which we
+refer to as a montage, the data for tcp_ar and tcp_ar_le are mapped
+to 22 common channels. The data for tcp_ar_a are mapped to 20 channels.
+The missing channels for the latter are these ones:
+
+ tcp_ar: montage =  8, A1-T3: EEG A1-REF -- EEG T3-REF
+ tcp_le: montage =  8, A1-T3: EEG A1-LE  -- EEG T3-LE
+
+ tcp_ar: montage = 13, T4-A2: EEG T4-REF -- EEG A2-REF 
+ tcp_le: montage = 13, T4-A2: EEG T4-LE  -- EEG A2-LE
+
+As mentioned before, we essentially insert proxies for the missing
+channels.
+
+Within each electrode configuration subset of the data, the files do
+not contain the same number of channels. For example, in
+edf/train/01_tcp_ar, we have this range of the number of channels:
+
+	 hdr_num_channels_signal =         27
+	 hdr_num_channels_signal =         28
+	 hdr_num_channels_signal =         29
+	 hdr_num_channels_signal =         30
+	 hdr_num_channels_signal =         31
+	 hdr_num_channels_signal =         32
+	 hdr_num_channels_signal =         33
+	 hdr_num_channels_signal =         34
+	 hdr_num_channels_signal =         35
+	 hdr_num_channels_signal =         36
+
+If we look at the channel labels for two typical files with a different
+number of channels, we see the following:
+
+ edf/train/01_tcp_ar/104/00010489/s005_2013_07_10/00010489_s005_t006.edf:
+  chan_labels (28) = [EEG FP1-REF], [EEG FP2-REF], [EEG F3-REF],
+  	             [EEG F4-REF], [EEG C3-REF], [EEG C4-REF], [EEG P3-REF],
+		     [EEG P4-REF], [EEG O1-REF], [EEG O2-REF], [EEG F7-REF],
+		     [EEG F8-REF], [EEG T3-REF], [EEG T4-REF], [EEG T5-REF],
+		     [EEG T6-REF], [EEG T1-REF], [EEG T2-REF], [EEG FZ-REF],
+		     [EEG CZ-REF], [EEG PZ-REF], [EEG EKG1-REF], [EEG A1-REF],
+		     [EEG A2-REF], [PHOTIC-REF], [IBI], [BURSTS], [SUPPR]
+
+ edf/train/01_tcp_ar/134/00013400/s002_2015_06_21/00013400_s002_t007.edf:
+  chan_labels (34) = [EEG FP1-REF], [EEG FP2-REF], [EEG F3-REF],
+                     [EEG F4-REF], [EEG C3-REF], [EEG C4-REF], [EEG P3-REF],
+		     [EEG P4-REF], [EEG O1-REF], [EEG O2-REF], [EEG F7-REF],
+		     [EEG F8-REF], [EEG T3-REF], [EEG T4-REF], [EEG T5-REF],
+		     [EEG T6-REF], [EEG T1-REF], [EEG T2-REF], [EEG FZ-REF],
+		     [EEG CZ-REF], [EEG PZ-REF], [EEG EKG1-REF], [EEG LOC-REF]
+		     [EEG ROC-REF], [EEG SP1-REF], [EEG SP2-REF], [EMG-REF],
+		     [EEG A1-REF], [EEG A2-REF], [EEG 31-REF], [EEG 32-REF],
+		     [IBI], [BURSTS], [SUPPR]
+
+The list of unique channel labels appearing in each configuration
+can be easily generated from the data:
+
+01_tcp_ar:        02_tcp_le:      03_tcp_ar_a:
+  EEG A1-REF        EEG A1-LE
+  EEG A2-REF	    EEG A2-LE
+  EEG C3P-REF	    
+  EEG C3-REF	    EEG C3-LE
+  EEG C4P-REF	        
+  EEG C4-REF	    EEG C4-LE	  
+  EEG CZ-REF	    EEG CZ-LE    
+  EEG EKG1-REF		      
+  EEG EKG-REF	    EEG EKG-LE
+  EEG F3-REF	    EEG F3-LE
+  EEG F4-REF	    EEG F4-LE
+  EEG F7-REF	    EEG F7-LE	    EEG F7-REF
+  EEG F8-REF	    EEG F8-LE
+  EEG FP1-REF	    EEG FP1-LE
+  EEG FP2-REF	    EEG FP2-LE
+  EEG FZ-REF	    EEG FZ-LE
+  EEG LOC-REF			    EEG LOC-REF
+  EEG LUC-REF	    EEG LUC-LE     
+  EEG O1-REF	    EEG 01-LE	    EEG O1-REF
+  EEG O2-REF	    EEC 02-LE	    EEG O2-REF
+  EEG OZ-REF	    EEG OZ-LE
+  EEG P3-REF	    EEG P3-LE	    EEG P3-REF
+  EEG P4-REF	    EEG P4-LE	    EEG P4-REF
+     		    EEG PG1-LE
+		    EEG PG2-LE
+  EEG PZ-REF	    EEG PZ-LE	    EEG PZ-REF
+  EEG RESP1-REF
+  EEG RESP2-REF
+  EEG RLC-REF	    EEG RLC-LE
+  EEG ROC-REF			    EEG ROC-REF
+  EEG SP1-REF	    EEG SP1-LE	    EEG SP1-REF
+  EEG SP2-REF	    EEG SP2-LE	    EEG SP2-REF
+  EEG T1-REF	    EEG T1-LE	    EEG T1-REF
+  EEG T2-REF	    EEG T2-LE	    EEG T2-REF
+  EEG T3-REF	    EEG T3-LE	    EEG T3-REF
+  EEG T4-REF	    EEG T4-LE	    EEG T4-REF
+  EEG T5-REF	    EEG T5-LE	    EEG T5-REF
+  EEG T6-REF	    EEG T6-LE	    EEG T6-REF
+				    EEG 20-REF
+				    EEG 21-REF
+				    EEG 22-REF
+     		    EEG 23-LE	    EEG 23-REF
+		    EEG 24-LE	    EEG 24-REF
+  EEG 26-REF	    EEG 26-LE	    EEG 26-REF
+  EEG 27-REF	    EEG 27-LE	    EEG 27-REF
+  EEG 28-REF	    EEG 28-LE	    EEG 28-REF
+  EEG 29-REF	    EEG 29-LE	    EEG 29-REF
+  EEG 30-REF	    EEG 30-LE	    EEG 30-REF
+  EEG 31-REF	    EEG 31-LE	    EEG 31-REF
+  EEG 32-REF	    EEG 32-LE	    EEG 32-REF
+
+     		       		    EEG 33-REF
+				    EEG 34-REF
+				    EEG 35-REF
+				    EEG 36-REF
+				    EEG 37-REF
+				    EEG 38-REF
+				    EEG 39-REF
+				    EEG 40-REF
+				    EEG 41-REF
+				    EEG 42-REF
+				    EEG 43-REF
+				    EEG 44-REF
+				    EEG 45-REF
+				    EEG 46-REF
+				    EEG 47-REF
+				    EEG 48-REF
+				    EEG 49-REF
+				    EEG 50-REF
+				    EEG 51-REF
+				    EEG 52-REF
+				    EEG 53-REF
+				    EEG 54-REF
+				    EEG 55-REF
+				    EEG 56-REF
+				    EEG 57-REF
+				    EEG 58-REF
+				    EEG 59-REF
+				    EEG 60-REF
+				    EEG 61-REF
+				    EEG 62-REF
+				    EEG 63-REF
+				    EEG 64-REF
+				    EEG 65-REF
+				    EEG 66-REF
+				    EEG 67-REF
+				    EEG 68-REF
+				    EEG 69-REF
+				    EEG 70-REF
+				    EEG 71-REF
+				    EEG 72-REF
+				    EEG 73-REF
+				    EEG 74-REF
+				    EEG 75-REF
+				    EEG 76-REF
+				    EEG 77-REF
+				    EEG 78-REF
+				    EEG 79-REF
+				    EEG 80-REF
+				    EEG 81-REF
+				    EEG 82-REF
+				    EEG 83-REF
+				    EEG 84-REF
+				    EEG 85-REF
+				    EEG 86-REF
+				    EEG 87-REF
+				    EEG 88-REF
+				    EEG 89-REF
+				    EEG 90-REF
+				    EEG 91-REF
+				    EEG 92-REF
+				    EEG 93-REF
+				    EEG 94-REF
+				    EEG 95-REF
+				    EEG 96-REF
+				    EEG 97-REF
+				    EEG 98-REF
+				    EEG 99-REF
+				    EEG 100-REF
+				    EEG 101-REF
+				    EEG 102-REF
+				    EEG 103-REF
+				    EEG 104-REF
+				    EEG 105-REF
+				    EEG 106-REF
+				    EEG 107-REF
+				    EEG 108-REF
+				    EEG 109-REF
+				    EEG 110-REF
+				    EEG 111-REF
+				    EEG 112-REF
+				    EEG 113-REF
+				    EEG 114-REF
+				    EEG 115-REF
+				    EEG 116-REF
+				    EEG 117-REF
+				    EEG 118-REF
+				    EEG 119-REF
+				    EEG 120-REF
+				    EEG 121-REF
+				    EEG 122-REF
+				    EEG 123-REF
+				    EEG 124-REF
+				    EEG 125-REF
+				    EEG 126-REF
+				    EEG 127-REF
+				    EEG 128-REF
+  ECG EKG-REF
+  EMG-REF			    EMG-REF
+  BURSTS			    BURSTS
+		   DC1-DC
+		   DC2-DC
+		   DC3-DC
+		   DC4-DC
+		   DC5-DC
+		   DC6-DC
+		   DC7-DC
+		   DC8-DC
+				    EDF ANNOTATIONS
+  IBI				    IBI
+  PHOTIC-REF	   PHOTIC PH
+  PULSE RATE
+  RESP ABDOMEN-REF
+  SUPPR				    SUPPR
+
+Another way to think of this is that we generally consider the following
+channels equivalent (*C3* means any channel label containing C3):
+
+ *C3*   *F7*   *O2*   *T5*
+ *C4*   *F8*   *P3*   *T6*
+ *CZ*   *FP1*  *P4* 
+ *F3*   *FP2*  *T3* 
+ *F4*   *O1*   *T4*
+     
+These channels are common to all electrode configurations we have seen.
+
+It is important to understand that even within an electrode configuration
+(e.g., 01_tcp_ar), the channels will not necessarily appear in the same
+order, and hence need to be referenced by label.
+
+The above "montages" are what we use to preprocess the data before
+we do feature extraction or deep learning. These montages are what
+neurologists use to manually read the data. They tend to accentuate
+seizures and make it easier to read EEGs. We have tried not using these
+montages but have found performance suffers.
+
+As always, email help@nedcdata.org if you have questions.
+
+-Joe Picone
+
+

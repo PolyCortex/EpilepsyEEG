@@ -1,0 +1,165 @@
+
+# version for python
+#
+version = params_v1.0.0
+
+#------------------------------------------------------------------------------
+#
+# Section 1: filename processing parameters
+#
+#------------------------------------------------------------------------------
+
+# version information
+# 
+version = 1.0
+
+# debugging status
+#
+#debug_level = none
+#verbosity = none
+
+# set channel selection
+# 
+channel_selection = (null)
+
+# define a standard tcp montage:
+#  note that channel labels must match exactly, which is why we use the exact 
+#  match mode for labels
+#
+match_mode = exact
+
+montage = 0, FP1-F7: EEG FP1-REF -- EEG F7-REF
+montage = 1, F7-T3: EEG F7-REF -- EEG T3-REF
+montage = 2, T3-T5: EEG T3-REF -- EEG T5-REF
+montage = 3, T5-O1: EEG T5-REF -- EEG O1-REF
+montage = 4, FP2-F8: EEG FP2-REF -- EEG F8-REF
+montage = 5, F8-T4: EEG F8-REF -- EEG T4-REF
+montage = 6, T4-T6: EEG T4-REF -- EEG T6-REF
+montage = 7, T6-O2: EEG T6-REF -- EEG O2-REF
+montage = 8, T3-C3: EEG T3-REF -- EEG C3-REF
+montage = 9, C3-CZ: EEG C3-REF -- EEG CZ-REF
+montage = 10, CZ-C4: EEG CZ-REF -- EEG C4-REF
+montage = 11, C4-T4: EEG C4-REF -- EEG T4-REF
+montage = 12, FP1-F3: EEG FP1-REF -- EEG F3-REF
+montage = 13, F3-C3: EEG F3-REF -- EEG C3-REF
+montage = 14, C3-P3: EEG C3-REF -- EEG P3-REF
+montage = 15, P3-O1: EEG P3-REF -- EEG O1-REF
+montage = 16, FP2-F4: EEG FP2-REF -- EEG F4-REF
+montage = 17, F4-C4: EEG F4-REF -- EEG C4-REF
+montage = 18, C4-P4: EEG C4-REF -- EEG P4-REF
+montage = 19, P4-O2: EEG P4-REF -- EEG O2-REF
+
+#------------------------------------------------------------------------------
+#
+# Section 2: signal processing parameters
+#
+#------------------------------------------------------------------------------
+
+# set the algorithm mode to do feature extraction
+#
+algorithm_mode = features
+
+# set signal processing parameters to use 100 msec frames with no
+# debiasing, window normalization, or time domain energy.
+#
+frame_mode = floor
+frame_duration = 0.1 secs
+window_duration = 0.2 secs
+window_name = hamming
+window_norm = none
+window_alignment = center
+debias_mode = none
+tenergy_mode = none
+
+# set filter bank parameters to implement a standard filter bank
+# with linearly spaced center frequencies.
+#
+filter_bank_type = linear
+filter_bank_normalization = none
+filter_bank_order = 8;
+fb_fft_order = 512 samples
+fb_minimum_frequency = 0.5 Hz
+fb_maximum_frequency = 25.00 Hz
+fb_spect_floor = 1.0e-20
+fb_noise_floor = 1.0e-20
+fenergy_mode = sumsq
+fenergy_min = 1.0e-20
+
+# set cepstral coefficient mode and order:
+#  the first of the 8 cepstral coefficient is discarded, producing a feature 
+#  vector of 7 cepstral coefficients.
+#
+cepstral_mode = dct_no_c0
+dct_order = 8 coefficients
+
+#------------------------------------------------------------------------------
+#
+# Section 3: feature selection parameters
+#
+#------------------------------------------------------------------------------
+
+# define the parameters that you want to retain in your feature vector:
+#  the first element is frequency domain energy, which is stored in place of
+#  the discarded 0th cepstral coefficient. The next section of the vector 
+#  contains the cepstral coefficients. This results in 8 base features.
+#
+output_fenergy  = 0
+output_cepstral = 1
+
+#------------------------------------------------------------------------------
+#
+# Section 4: post-processing
+#
+#------------------------------------------------------------------------------
+
+# set post-processing parameters:
+#  the post-processing mode is set to calculate the differential energy and
+#  the first and the second derivatives of the base features. At this point,
+#  the feature vector, which was previously 8 features, would become a 27 
+#  feature vector because of the addition of the differential energy term and 
+#  the first and second derivatives for each feature.
+#
+pproc_mode = dminmax_egy+delta-delta
+
+# set the exceptions for delta-delta:
+#  the second derivative for the differential energy term is not calculated, 
+#  therefore generating the standard feature vector with dimension of 26.
+#
+pproc_excp = dminmax_egy_no_delta-delta
+
+# set window length for minmax_egy:
+#  window length for the calculation of differential energy is set to 9 units 
+#  The window extends from [-(wlen-1)/2, +(wlen-1)/2]. For instance wlen=9 
+#  results in a window extending from [-4,+4). The duration in time is
+#  a multiple of the frame duration.
+#
+dminmax_egy_window_length = 9 units
+
+# set window length for derivatives:
+#  window length for the calculation of delta and delta-delta. The window 
+#  length for the first derivative is set to 9 units, while window length for 
+#  the calculation of delta-delta is set to 3 units. The window length 
+#  specification works as explained for the dminmax_egy_window_length.
+#
+delta_window_length = 9 units
+deltadelta_window_length = 3 units
+
+#------------------------------------------------------------------------------
+#
+# Section 5: output file parameters
+#
+#------------------------------------------------------------------------------
+
+# set file processing parameters:
+#  generate single-channel per file HTK-formatted feature vector files
+#
+output_format = raw
+output_directory = .
+output_replace = (null)
+output_extension = raw
+
+#------------------------------------------------------------------------------
+#
+# end of file
+#
+#------------------------------------------------------------------------------
