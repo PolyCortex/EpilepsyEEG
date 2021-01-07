@@ -104,8 +104,11 @@ def section_seiz(section, annotations):
     :param list annotations: annotations coming from annotation_reader(_)['tse_bi']
     """
     start, stop = section
+    deltaT = stop - start
     for annot in annotations:
-        if start>=annot[0] and stop<=annot[1]:
+        if start>=annot[0] and annot[1]>=start+deltaT/2:
+            return 'seiz' in annot[2].keys()
+        elif start<annot[0] and annot[0]<=start+deltaT/2:
             return 'seiz' in annot[2].keys()
 
 
